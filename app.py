@@ -108,10 +108,8 @@ def hselect(key):
 if page=='Overview':
     cols=st.columns(3)
     for col,title,table in zip(cols,['Nodes','Hierarchies','Relationships'],['nodes','hierarchies','node_relationships']): col.metric(title,len(db[table]))
-    st.subheader('Start your demonstration')
-    st.write('1. Explore the Canada path. 2. Rename a node. 3. Generate the report. 4. Add another compatible parent and move a branch using a later effective date.')
-    st.write('All workbook master entries are available, but most are deliberately unassigned until real mappings are supplied.')
-    st.subheader('CSV tables')
+    
+    st.subheader('Tables')
     table=st.selectbox('Table',list(db)); show(db[table])
     st.download_button('Download table',(DATA/f'{table}.csv').read_bytes(),f'{table}.csv','text/csv',icon=':material/download:')
 
