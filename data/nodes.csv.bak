@@ -1,0 +1,371 @@
+node_id,node_type_id,node_name
+0,0,root
+10001,11,EMEA
+10002,11,Greater China
+10003,11,LatAm
+10004,11,Asia
+10005,11,Americas
+10006,11,WE
+10007,11,APAC
+10008,12,RLM - GC
+10009,12,WE
+10010,12,RLM - CAN
+10011,12,RLM - EMEA
+10012,12,RLM - LATAM
+10013,12,APAC - ANZ
+10014,12,USA
+10015,12,APAC - JPN
+10016,12,RLM - Asia
+10017,13,Egypt
+10018,13,Bulgaria
+10019,13,APS
+10020,13,Azerbaijan
+10021,13,Algeria
+10022,13,BRAZIL
+10023,13,Morocco
+10024,13,Italy
+10025,13,TWAL
+10026,13,SOUTH AFRICA
+10027,13,INDIA
+10028,13,France
+10029,13,ISEA
+10030,13,Slovakia
+10031,13,Lebanon
+10032,13,Qatar
+10033,13,Iberia
+10034,13,JAPAN
+10035,13,TAIWAN
+10036,13,Greater Bay Area
+10037,13,ANZ
+10038,13,Austria
+10039,13,SOLA
+10040,13,CANADA
+10041,13,UKI
+10042,13,DACH
+10043,13,MSEA
+10044,13,SOUTH KOREA
+10045,13,Kazakhstan
+10046,13,Pakistan
+10047,13,Benelux
+10048,13,CELA
+10049,13,Nordics
+10050,13,Switzerland
+10051,13,RUSSIA
+10052,13,CEE
+10053,13,HK & Macau
+10054,13,Israel
+10055,13,WE
+10056,13,MAINLAND CHINA
+10057,13,USA
+10058,13,NOLA
+10059,14,Kazakhstan
+10060,14,Zhongshan
+10061,14,Shenzhen
+10062,14,Turkey
+10063,14,Russia
+10064,14,Hong Kong
+10065,14,Africa
+10066,14,Kuwait
+10067,14,Slovakia
+10068,14,Azerbaijan
+10069,14,Foshan
+10070,14,Switzerland
+10071,14,Croatia
+10072,14,Thailand
+10073,14,Dongguan
+10074,14,Pakistan
+10075,14,Latvia
+10076,14,Belgium
+10077,14,Puerto Rico
+10078,14,Egypt
+10079,14,Slovenia
+10080,14,Spain
+10081,14,Germany
+10082,14,Australia
+10083,14,Czech Republic
+10084,14,Guangzhou
+10085,14,Kosovo
+10086,14,Bangladesh
+10087,14,Malaysia
+10088,14,Colombia
+10089,14,Chile
+10090,14,Canada
+10091,14,Zhaoqing
+10092,14,Morocco
+10093,14,Ireland
+10094,14,Italy
+10095,14,Taiwan
+10096,14,Brazil
+10097,14,Jiangmen
+10098,14,France
+10099,14,New Zealand
+10100,14,Romania
+10101,14,Saudi Arabia
+10102,14,Philippines
+10103,14,Bahrain
+10104,14,Algeria
+10105,14,Luxembourg
+10106,14,Macau
+10107,14,Estonia
+10108,14,Ukraine
+10109,14,Japan
+10110,14,Lithuania
+10111,14,Argentina
+10112,14,Lebanon
+10113,14,Israel
+10114,14,Oman
+10115,14,Mexico
+10116,14,Finland
+10117,14,Portugal
+10118,14,South Africa
+10119,14,United Arab Emirates
+10120,14,Bulgaria
+10121,14,Hiuzhou
+10122,14,Qatar
+10123,14,Sweden
+10124,14,Norway
+10125,14,Denmark
+10126,14,Serbia
+10127,14,Poland
+10128,14,Bosnia
+10129,14,Hungary
+10130,14,Austria
+10131,14,China
+10132,14,United Kingdom
+10133,14,Netherlands
+10134,14,Singapore
+10135,14,Zhuhai
+10136,14,Greece
+10137,14,USA
+10138,14,Cambodia
+10139,14,Vietnam
+10140,14,South Korea
+10141,14,India
+10142,14,Indonesia
+10143,14,Panama
+10144,15,Kazakhstan
+10145,15,Zhongshan
+10146,15,Shenzhen
+10147,15,Turkey
+10148,15,Russia
+10149,15,Hong Kong
+10150,15,Africa
+10151,15,Kuwait
+10152,15,Slovakia
+10153,15,Azerbaijan
+10154,15,Foshan
+10155,15,Switzerland
+10156,15,Croatia
+10157,15,Thailand
+10158,15,Dongguan
+10159,15,Pakistan
+10160,15,Latvia
+10161,15,Belgium
+10162,15,Puerto Rico
+10163,15,Egypt
+10164,15,Slovenia
+10165,15,Spain
+10166,15,Germany
+10167,15,Australia
+10168,15,Czech Republic
+10169,15,Guangzhou
+10170,15,Kosovo
+10171,15,Bangladesh
+10172,15,Malaysia
+10173,15,Colombia
+10174,15,Chile
+10175,15,Canada
+10176,15,Zhaoqing
+10177,15,Morocco
+10178,15,Ireland
+10179,15,Italy
+10180,15,Taiwan
+10181,15,Brazil
+10182,15,Jiangmen
+10183,15,France
+10184,15,New Zealand
+10185,15,Romania
+10186,15,Saudi Arabia
+10187,15,Philippines
+10188,15,Bahrain
+10189,15,Algeria
+10190,15,Luxembourg
+10191,15,Macau
+10192,15,Estonia
+10193,15,Ukraine
+10194,15,Japan
+10195,15,Lithuania
+10196,15,Argentina
+10197,15,Lebanon
+10198,15,Israel
+10199,15,Oman
+10200,15,Mexico
+10201,15,Finland
+10202,15,Portugal
+10203,15,South Africa
+10204,15,United Arab Emirates
+10205,15,Bulgaria
+10206,15,Hiuzhou
+10207,15,Qatar
+10208,15,Sweden
+10209,15,Norway
+10210,15,Denmark
+10211,15,Serbia
+10212,15,Poland
+10213,15,Bosnia
+10214,15,Hungary
+10215,15,Austria
+10216,15,China
+10217,15,United Kingdom
+10218,15,Netherlands
+10219,15,Singapore
+10220,15,Zhuhai
+10221,15,Greece
+10222,15,USA-Northeast
+10223,15,Cambodia
+10224,15,Vietnam
+10225,15,South Korea
+10226,15,India
+10227,15,Indonesia
+10228,15,Panama
+10229,15,USA-Southeast
+10230,15,USA-MidWest
+10231,15,USA-West
+10232,16,Alabama
+10233,16,Alaska
+10234,16,Arizona
+10235,16,Arkansas
+10236,16,California
+10237,16,Colorado
+10238,16,Connecticut
+10239,16,Delaware
+10240,16,Florida
+10241,16,Georgia
+10242,16,Hawaii
+10243,16,Idaho
+10244,16,Illinois
+10245,16,Indiana
+10246,16,Iowa
+10247,16,Kansas
+10248,16,Kentucky
+10249,16,Louisiana
+10250,16,Maine
+10251,16,Maryland
+10252,16,Massachusetts
+10253,16,Michigan
+10254,16,Minnesota
+10255,16,Mississippi
+10256,16,Missouri
+10257,16,Montana
+10258,16,Nebraska
+10259,16,Nevada
+10260,16,New Hampshire
+10261,16,New Jersey
+10262,16,New Mexico
+10263,16,New York
+10264,16,North Carolina
+10265,16,North Dakota
+10266,16,Ohio
+10267,16,Oklahoma
+10268,16,Oregon
+10269,16,Pennsylvania
+10270,16,Rhode Island
+10271,16,South Carolina
+10272,16,South Dakota
+10273,16,Tennessee
+10274,16,Texas
+10275,16,Utah
+10276,16,Vermont
+10277,16,Virginia
+10278,16,Washington
+10279,16,West Virginia
+10280,16,Wisconsin
+10281,16,Wyoming
+10282,16,Kazakhstan
+10283,16,Zhongshan
+10284,16,Shenzhen
+10285,16,Turkey
+10286,16,Russia
+10287,16,Hong Kong
+10288,16,Africa
+10289,16,Kuwait
+10290,16,Slovakia
+10291,16,Azerbaijan
+10292,16,Foshan
+10293,16,Switzerland
+10294,16,Croatia
+10295,16,Thailand
+10296,16,Dongguan
+10297,16,Pakistan
+10298,16,Latvia
+10299,16,Belgium
+10300,16,Puerto Rico
+10301,16,Egypt
+10302,16,Slovenia
+10303,16,Spain
+10304,16,Germany
+10305,16,Australia
+10306,16,Czech Republic
+10307,16,Guangzhou
+10308,16,Kosovo
+10309,16,Bangladesh
+10310,16,Malaysia
+10311,16,Colombia
+10312,16,Chile
+10313,16,Canada
+10314,16,Zhaoqing
+10315,16,Morocco
+10316,16,Ireland
+10317,16,Italy
+10318,16,Taiwan
+10319,16,Brazil
+10320,16,Jiangmen
+10321,16,France
+10322,16,New Zealand
+10323,16,Romania
+10324,16,Saudi Arabia
+10325,16,Philippines
+10326,16,Bahrain
+10327,16,Algeria
+10328,16,Luxembourg
+10329,16,Macau
+10330,16,Estonia
+10331,16,Ukraine
+10332,16,Japan
+10333,16,Lithuania
+10334,16,Argentina
+10335,16,Lebanon
+10336,16,Israel
+10337,16,Oman
+10338,16,Mexico
+10339,16,Finland
+10340,16,Portugal
+10341,16,South Africa
+10342,16,United Arab Emirates
+10343,16,Bulgaria
+10344,16,Hiuzhou
+10345,16,Qatar
+10346,16,Sweden
+10347,16,Norway
+10348,16,Denmark
+10349,16,Serbia
+10350,16,Poland
+10351,16,Bosnia
+10352,16,Hungary
+10353,16,Austria
+10354,16,China
+10355,16,United Kingdom
+10356,16,Netherlands
+10357,16,Singapore
+10358,16,Zhuhai
+10359,16,Greece
+10360,16,Cambodia
+10361,16,Vietnam
+10362,16,South Korea
+10363,16,India
+10364,16,Indonesia
+10365,16,Panama
+10366,17,DEMO Tower Canada 001
+10367,12,RLM-South east asia
+10368,12,India
+10369,16,Tamil nadu

@@ -1,0 +1,9 @@
+node_type_id,node_type_name
+0,Root
+11,Area
+12,Region
+13,Sub Region
+14,Country
+15,Sub Country
+16,State
+17,Tower
