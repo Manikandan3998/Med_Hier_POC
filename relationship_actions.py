@@ -1,23 +1,21 @@
 """Validated relationship operations; inputs are never mutated."""
 from copy import deepcopy
-from datetime import date
+from datetime import datetime
 from core import validate, next_id
 
 
-def checked_day(value):
+def checked_ts(value):
     try:
-        parsed=date.fromisoformat(value)
+        parsed=datetime.fromisoformat(value)
     except (ValueError,TypeError):
-        raise ValueError('Use a valid YYYY-MM-DD date') from None
-    if parsed.isoformat()!=value:
-        raise ValueError('Use YYYY-MM-DD dates')
+        raise ValueError('Use a valid timestamp (YYYY-MM-DDTHH:MM:SS)') from None
     return parsed
 
 
 def checked(db):
     for r in db['node_relationships']:
-        checked_day(r['start'])
-        if r['end']: checked_day(r['end'])
+        checked_ts(r['start'])
+        if r['end']: checked_ts(r['end'])
     errors=validate(db)
     if errors: raise ValueError('\n'.join(errors[:15]))
     return db
@@ -30,18 +28,18 @@ def require_active(db,hid):
 
 
 def existing_open(db,rid,day):
-    checked_day(day)
+    checked_ts(day)
     r=next((r for r in db['node_relationships'] if r['relationship_id']==rid),None)
     if r is None: raise ValueError('Relationship does not exist')
     require_active(db,r['hier_id'])
     if r['end']: raise ValueError('This relationship already has an end date; history cannot be overwritten here')
-    if checked_day(day)<=checked_day(r['start']):
-        raise ValueError('Effective date must be later than the existing start date. Date-only storage cannot represent a same-day interval.')
+    if checked_ts(day)<=checked_ts(r['start']):
+        raise ValueError('Effective timestamp must be later than the existing start timestamp.')
     return r
 
 
 def add_relationship(db,hid,level,parent,child,start):
-    checked_day(start); require_active(db,hid)
+    checked_ts(start); require_active(db,hid)
     d=deepcopy(db)
     d['node_relationships'].append(dict(relationship_id=next_id(d['node_relationships'],'relationship_id'),hier_id=hid,level=level,parent=parent,child=child,start=start,end=''))
     return checked(d)

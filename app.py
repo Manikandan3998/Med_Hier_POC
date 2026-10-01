@@ -1,8 +1,11 @@
-from datetime import date
+from datetime import date, datetime, time
 import copy, io, csv, json
+import importlib
 import pandas as pd
 import streamlit as st
+import relationship_actions as _ra; importlib.reload(_ra)
 from relationship_actions import add_relationship, modify_relationship, end_relationship
+import core as _core; importlib.reload(_core)
 from core import load, save, validate, flatten, move, next_id, active, write_csv, DATA
 
 from pathlib import Path
@@ -68,7 +71,8 @@ h2, h3 { color:var(--navy); font-weight:600; }
 .stApp input, .stApp textarea, [data-baseweb="select"] *, [data-testid="stDateInput"] * { color:#170F4F !important; -webkit-text-fill-color:#170F4F !important; }
 [data-baseweb="popover"] > div, [data-baseweb="popover"] ul, [data-baseweb="menu"], [data-baseweb="calendar"] { background:#fff !important; color:#170F4F !important; }
 [data-baseweb="popover"] li:hover { background:#F3F4FA !important; }
-[data-baseweb="tag"] { background:#1010EB !important; } [data-baseweb="tag"] * { color:#fff !important; -webkit-text-fill-color:#fff !important; }
+[data-baseweb="tag"] { background:#1010EB !important; } [data-baseweb="tag"], [data-baseweb="tag"] *, [data-baseweb="tag"] span, [data-baseweb="tag"] svg { color:#fff !important; -webkit-text-fill-color:#fff !important; fill:#fff !important; }
+span[data-tag] { background:#1010EB !important; } span[data-tag], span[data-tag] * { color:#fff !important; -webkit-text-fill-color:#fff !important; fill:#fff !important; }
 [data-baseweb="input"]:focus-within, [data-baseweb="select"] > div:focus-within { border-color:var(--blue) !important; }
 
 [data-testid="stMetric"] { background:var(--soft); border-left:5px solid var(--blue); border-radius:14px; padding:1rem 1.3rem; }
@@ -101,7 +105,7 @@ def commit(candidate,table):
 def show(rows): st.dataframe(pd.DataFrame(rows),use_container_width=True,hide_index=True)
 def label(n):
     r=next(r for r in db['nodes'] if r['node_id']==n)
-    return f"{r['node_name']} · ID {n}"
+    return f"{r['node_name']} - ID {n}"
 def hselect(key):
     return st.selectbox('Hierarchy',[h['hier_id'] for h in db['hierarchies']],format_func=lambda x:next(h['hier_desc'] for h in db['hierarchies'] if h['hier_id']==x),key=key)
 
@@ -115,25 +119,70 @@ if page=='Overview':
 
 elif page=='Nodes':
     typ=st.selectbox('Node type',[t['node_type_id'] for t in db['node_types']],format_func=lambda x:next(t['node_type_name'] for t in db['node_types'] if t['node_type_id']==x))
-    show([n for n in db['nodes'] if n['node_type_id']==typ])
-    with st.form('add_node'):
-        name=st.text_input('New node name')
-        if st.form_submit_button('Add node',icon=':material/add_circle:'):
-            if typ=='0': st.error('Only the existing root is supported.')
-            elif not name.strip(): st.error('Enter a name.')
-            elif any(n['node_type_id']==typ and n['node_name'].casefold()==name.strip().casefold() for n in db['nodes']): st.error('This name already exists for the selected type.')
-            else:
-                d=copy.deepcopy(db); d['nodes'].append({'node_id':next_id(d['nodes'],'node_id'),'node_type_id':typ,'node_name':name.strip()}); commit(d,'nodes')
-    ids=[n['node_id'] for n in db['nodes'] if n['node_type_id']==typ and n['node_id']!='0']
-    if ids:
-        node=st.selectbox('Rename node',ids,format_func=label)
-        with st.form('rename'):
-            name=st.text_input('Updated name',value=next(n['node_name'] for n in db['nodes'] if n['node_id']==node))
-            if st.form_submit_button('Save name',icon=':material/edit:'):
-                if not name.strip(): st.error('Name is required.')
-                elif any(n['node_id']!=node and n['node_type_id']==typ and n['node_name'].casefold()==name.strip().casefold() for n in db['nodes']): st.error('Name already exists for this type.')
+    is_root=typ=='0'
+    filtered=[n for n in db['nodes'] if n['node_type_id']==typ]
+    df=pd.DataFrame(filtered,columns=['node_id','node_type_id','node_name'])
+    if 'nodes_mode' not in st.session_state: st.session_state['nodes_mode']=None
+    if is_root and st.session_state['nodes_mode'] in ('add','delete'): st.session_state['nodes_mode']=None
+    st.markdown("""<style>
+div[data-testid="stHorizontalBlock"]:has(span#node-btn-row) {flex-wrap:nowrap!important;gap:.5rem!important;justify-content:flex-start!important;}
+div[data-testid="stHorizontalBlock"]:has(span#node-btn-row) > div[data-testid="stColumn"] {flex:0 0 auto!important;width:auto!important;min-width:0!important;}
+div[data-testid="stElementContainer"]:has(span#node-btn-row) {display:none!important;}
+</style>""",unsafe_allow_html=True)
+    btn_row=st.columns([1,1,1,5],gap='small')
+    btn_row[3].markdown('<span id="node-btn-row"></span>',unsafe_allow_html=True)
+    if btn_row[0].button('Add',icon=':material/add_circle:',key='node_add',disabled=is_root): st.session_state['nodes_mode']='add'; st.rerun()
+    if btn_row[1].button('Edit',icon=':material/edit:',key='node_edit'): st.session_state['nodes_mode']='edit'; st.rerun()
+    if btn_row[2].button('Delete',icon=':material/delete:',key='node_del',disabled=is_root): st.session_state['nodes_mode']='delete'; st.rerun()
+    mode=st.session_state['nodes_mode']
+    if mode is None or mode=='add':
+        st.dataframe(df,use_container_width=True,hide_index=True)
+        if mode=='add':
+            with st.form('add_node'):
+                name=st.text_input('New node name')
+                c1,c2,_=st.columns([2,2,4])
+                done=c1.form_submit_button('Done',icon=':material/check:')
+                cancel=c2.form_submit_button('Cancel',icon=':material/close:')
+            if cancel: st.session_state['nodes_mode']=None; st.rerun()
+            if done:
+                if not name.strip(): st.error('Enter a name.')
+                elif any(n['node_type_id']==typ and n['node_name'].casefold()==name.strip().casefold() for n in db['nodes']): st.error('This name already exists for the selected type.')
                 else:
-                    d=copy.deepcopy(db); next(n for n in d['nodes'] if n['node_id']==node)['node_name']=name.strip(); commit(d,'nodes')
+                    d=copy.deepcopy(db); d['nodes'].append({'node_id':next_id(d['nodes'],'node_id'),'node_type_id':typ,'node_name':name.strip()}); st.session_state['nodes_mode']=None; commit(d,'nodes')
+    elif mode=='edit':
+        edit_df=df[['node_id','node_name']].copy()
+        edited=st.data_editor(edit_df,column_config={'node_id':st.column_config.TextColumn('Node ID',disabled=True),'node_name':st.column_config.TextColumn('Node Name')},disabled=['node_id'],num_rows='fixed',use_container_width=True,hide_index=True,key='nodes_edit_editor')
+        c1,c2,_=st.columns([2,2,4])
+        if c1.button('Finish',icon=':material/check:'):
+            d=copy.deepcopy(db); errors=[]; seen_names=set()
+            for _,row in edited.iterrows():
+                name=str(row['node_name']).strip() if pd.notna(row['node_name']) else ''; nid=str(row['node_id'])
+                if not name: errors.append('Node name cannot be empty.'); continue
+                if name.casefold() in seen_names: errors.append(f'Duplicate name: {name}'); continue
+                seen_names.add(name.casefold())
+                same=[n for n in d['nodes'] if n['node_type_id']==typ and n['node_name'].casefold()==name.casefold() and n['node_id']!=nid]
+                if same: errors.append(f'Duplicate name: {name}'); continue
+                next(n for n in d['nodes'] if n['node_id']==nid)['node_name']=name
+            if errors:
+                for e in errors: st.error(e)
+            else: st.session_state['nodes_mode']=None; commit(d,'nodes')
+        if c2.button('Cancel',icon=':material/close:'): st.session_state['nodes_mode']=None; st.rerun()
+    elif mode=='delete':
+        event=st.dataframe(df,use_container_width=True,hide_index=True,on_select='rerun',selection_mode='multi-row',key='nodes_delete_df')
+        selected_indices=event.selection.rows if event.selection else []
+        c1,c2,_=st.columns([2,2,4])
+        if c1.button('Confirm',icon=':material/delete:'):
+            if not selected_indices: st.error('Select at least one row to delete.')
+            else:
+                ids_to_delete={filtered[i]['node_id'] for i in selected_indices}
+                in_use={r['parent'] for r in db['node_relationships']}|{r['child'] for r in db['node_relationships']}
+                blocked=ids_to_delete&in_use
+                if blocked:
+                    names=', '.join(next(n['node_name'] for n in db['nodes'] if n['node_id']==nid) for nid in blocked)
+                    st.error(f'Cannot delete nodes used in relationships: {names}')
+                else:
+                    d=copy.deepcopy(db); d['nodes']=[n for n in d['nodes'] if n['node_id'] not in ids_to_delete]; st.session_state['nodes_mode']=None; commit(d,'nodes')
+        if c2.button('Cancel',icon=':material/close:',key='del_cancel'): st.session_state['nodes_mode']=None; st.rerun()
 
 elif page=='Hierarchies & rules':
     show(db['hierarchies'])
@@ -149,7 +198,12 @@ elif page=='Hierarchies & rules':
         name=st.text_input('Hierarchy description',selected['hier_desc']); enabled=st.checkbox('Active',selected['active']=='Y')
         if st.form_submit_button('Save hierarchy',icon=':material/save:'):
             d=copy.deepcopy(db); h=next(h for h in d['hierarchies'] if h['hier_id']==hid); h.update(hier_desc=name.strip(),active='Y' if enabled else 'N'); commit(d,'hierarchies')
-    show([r for r in db['level_rules'] if r['hier_id']==hid])
+    type_map={t['node_type_id']:f"{t['node_type_id']} - {t['node_type_name']}" for t in db['node_types']}
+    rules_display=pd.DataFrame([r for r in db['level_rules'] if r['hier_id']==hid])
+    if not rules_display.empty:
+        rules_display['parent_node_type']=rules_display['parent_node_type'].map(type_map)
+        rules_display['child_node_type']=rules_display['child_node_type'].map(type_map)
+    st.dataframe(rules_display,use_container_width=True,hide_index=True)
     st.caption('Choose types in order. Rule changes are blocked once this hierarchy has relationships.')
     types={t['node_type_id']:t['node_type_name'] for t in db['node_types'] if t['node_type_id']!='0'}
     chain=st.multiselect('Ordered levels',list(types),format_func=types.get,default=[r['child_node_type'] for r in sorted(db['level_rules'],key=lambda x:int(x['level'])) if r['hier_id']==hid])
@@ -163,27 +217,107 @@ elif page=='Hierarchies & rules':
 
 elif page=='Relationships':
     hid=hselect('rel_h')
-    show([r for r in db['node_relationships'] if r['hier_id']==hid])
+    node_lookup={n['node_id']:n for n in db['nodes']}
+    type_lookup={t['node_type_id']:t['node_type_name'] for t in db['node_types']}
+    hier_lookup={h['hier_id']:h['hier_desc'] for h in db['hierarchies']}
+    rule_lookup={r['level']:r for r in db['level_rules'] if r['hier_id']==hid}
+    rel_rows=[r for r in db['node_relationships'] if r['hier_id']==hid]
+    if rel_rows:
+        rel_df=pd.DataFrame(rel_rows)
+        def enrich_node(nid):
+            n=node_lookup.get(nid)
+            return f"{nid} - ({n['node_name']})" if n else nid
+        def enrich_level(lvl):
+            r=rule_lookup.get(lvl)
+            if not r: return lvl
+            ptype=type_lookup.get(r['parent_node_type'],'')
+            ctype=type_lookup.get(r['child_node_type'],'')
+            return f"{lvl} - {ptype} \u2192 {ctype}"
+        rel_df['hier_id']=rel_df['hier_id'].map(lambda x:f"{x} - {hier_lookup.get(x,x)}")
+        rel_df['level']=rel_df['level'].apply(enrich_level)
+        rel_df['parent']=rel_df['parent'].apply(enrich_node)
+        rel_df['child']=rel_df['child'].apply(enrich_node)
+        with st.expander('Filters',icon=':material/filter_alt:'):
+            fc1,fc2,fc3=st.columns(3)
+            f_level=fc1.multiselect('Level',sorted(rel_df['level'].unique()),key='rel_f_level')
+            _after_level=rel_df[rel_df['level'].isin(f_level)] if f_level else rel_df
+            parent_opts=sorted(_after_level['parent'].unique())
+            # clear stale parent selections that no longer match filtered options
+            if 'rel_f_parent' in st.session_state:
+                st.session_state['rel_f_parent']=[v for v in st.session_state['rel_f_parent'] if v in parent_opts]
+            f_parent=fc2.multiselect('Parent',parent_opts,key='rel_f_parent')
+            _after_parent=_after_level[_after_level['parent'].isin(f_parent)] if f_parent else _after_level
+            child_opts=sorted(_after_parent['child'].unique())
+            if 'rel_f_child' in st.session_state:
+                st.session_state['rel_f_child']=[v for v in st.session_state['rel_f_child'] if v in child_opts]
+            f_child=fc3.multiselect('Child',child_opts,key='rel_f_child')
+        display_df=_after_parent[_after_parent['child'].isin(f_child)] if f_child else _after_parent
+        st.dataframe(display_df,use_container_width=True,hide_index=True)
+    else:
+        st.info('No relationships for this hierarchy.')
     rules=sorted([r for r in db['level_rules'] if r['hier_id']==hid], key=lambda r:int(r['level']))
     if not rules:
         st.warning('Define level rules first.'); st.stop()
-    level=st.selectbox('Level',[r['level'] for r in rules])
+    def level_label(lvl):
+        r=next((r for r in rules if r['level']==lvl),None)
+        if not r: return lvl
+        return f"{lvl} - {type_lookup.get(r['parent_node_type'],'')} \u2192 {type_lookup.get(r['child_node_type'],'')}"
+    existing_rels=[r for r in db['node_relationships'] if r['hier_id']==hid and not r['end']]
+    levels_with_data={r['level'] for r in existing_rels}
+    action=st.radio('Action',['Add new relationship','Modify relationship','End relationship'])
+    st.caption('Timestamps are effective timestamps. End is exclusive. Closed rows remain in history.')
+    # determine unlocked levels based on action
+    all_levels=[r['level'] for r in rules]
+    if action=='Add new relationship':
+        unlocked=set()
+        for i,r in enumerate(rules):
+            lvl=r['level']
+            if i==0:
+                unlocked.add(lvl)
+            elif rules[i-1]['level'] in levels_with_data:
+                unlocked.add(lvl)
+            else:
+                break
+        def add_level_label(lvl):
+            base=level_label(lvl)
+            return base if lvl in unlocked else f"\U0001f512\uFE0E {base} (complete previous level first)"
+        level=st.selectbox('Level',all_levels,format_func=add_level_label)
+        if level not in unlocked:
+            st.warning('Complete relationships at the previous level before adding to this level.')
+            st.stop()
+    else:
+        available_levels=[r['level'] for r in rules if r['level'] in levels_with_data]
+        if not available_levels:
+            st.info('No relationships exist yet for this hierarchy.'); st.stop()
+        level=st.selectbox('Level',available_levels,format_func=level_label)
     rule=next(r for r in rules if r['level']==level)
-    parents=[n['node_id'] for n in db['nodes'] if n['node_type_id']==rule['parent_node_type']]
+    rule_idx=next(i for i,r in enumerate(rules) if r['level']==level)
+    # parent filtering: for Add, cascade from previous level's children
+    if action=='Add new relationship':
+        if rule_idx==0:
+            parents=[n['node_id'] for n in db['nodes'] if n['node_type_id']==rule['parent_node_type']]
+        else:
+            prev_level=rules[rule_idx-1]['level']
+            parents=sorted({r['child'] for r in existing_rels if r['level']==prev_level})
+        if not parents:
+            st.warning('Complete the previous level first to unlock parent options.'); st.stop()
+    else:
+        if rule_idx==0:
+            parents=[n['node_id'] for n in db['nodes'] if n['node_type_id']==rule['parent_node_type']]
+        else:
+            prev_level=rules[rule_idx-1]['level']
+            parents=sorted({r['child'] for r in existing_rels if r['level']==prev_level})
     children=[n['node_id'] for n in db['nodes'] if n['node_type_id']==rule['child_node_type']]
     if not parents or not children:
         st.warning('Add nodes of the required types first.'); st.stop()
-    action=st.radio('Action',['Add new relationship','Modify relationship','End relationship'])
-    st.caption('Dates are effective dates. End is exclusive. Closed rows remain in history.')
     if action=='Add new relationship':
         with st.form('add_relationship'):
             parent=st.selectbox('Parent',parents,format_func=label)
             child=st.selectbox('Child',children,format_func=label)
-            start=st.date_input('Start date',date.today())
-            st.caption('A new relationship ID is generated. End date stays blank.')
+            st.caption('Start timestamp is captured automatically when the record is created. End timestamp stays blank.')
             if st.form_submit_button('Add relationship',icon=':material/add_link:'):
                 try:
-                    d=add_relationship(db,hid,level,parent,child,start.isoformat())
+                    d=add_relationship(db,hid,level,parent,child,datetime.now().isoformat(timespec='seconds'))
                     commit(d,'node_relationships')
                 except ValueError as e: st.error(str(e))
     else:
@@ -206,19 +340,18 @@ elif page=='Relationships':
                 else:
                     with st.form(f'modify_relationship_{rid}'):
                         parent=st.selectbox('New parent',alternatives,format_func=label)
-                        when=st.date_input('Effective change date',date.today())
+                        st.caption('Effective timestamp is captured automatically when the modification is submitted.')
                         if st.form_submit_button('Modify relationship',icon=':material/swap_horiz:'):
                             try:
-                                d=modify_relationship(db,rid,parent,when.isoformat())
+                                d=modify_relationship(db,rid,parent,datetime.now().isoformat(timespec='seconds'))
                                 commit(d,'node_relationships')
                             except ValueError as e: st.error(str(e))
             else:
                 with st.form(f'end_relationship_{rid}'):
-                    when=st.date_input('End date',date.today())
-                    st.caption('Keeps the selected relationship ID. No replacement row is created.')
+                    st.caption('Keeps the selected relationship ID. No replacement row is created. End timestamp is captured automatically.')
                     if st.form_submit_button('End relationship',icon=':material/event_busy:'):
                         try:
-                            d=end_relationship(db,rid,when.isoformat())
+                            d=end_relationship(db,rid,datetime.now().isoformat(timespec='seconds'))
                             commit(d,'node_relationships')
                         except ValueError as e: st.error(str(e))
 
@@ -226,13 +359,17 @@ elif page=='Validation':
     errors=validate(db)
     if errors:
         for e in errors: st.error(e)
-    else: st.success('Structural validation passed: IDs, references, types, date intervals and overlapping parent assignments.')
+    else: st.success('Structural validation passed: IDs, references, types, timestamp intervals and overlapping parent assignments.')
     linked={r['child'] for r in db['node_relationships']}
     st.subheader('Nodes without any child assignment')
     st.caption('Expected for workbook names whose business mappings have not been supplied.')
     show([n for n in db['nodes'] if n['node_id']!='0' and n['node_id'] not in linked])
 else:
-    hid=hselect('view_h'); day=st.date_input('As of date',date.today()).isoformat()
+    hid=hselect('view_h')
+    dc1,dc2=st.columns(2)
+    as_d=dc1.date_input('As of date',date.today())
+    as_t=dc2.time_input('As of time',time(23,59,59))
+    day=datetime.combine(as_d,as_t).isoformat()
     try: rows,cols,warnings=flatten(db,hid,day)
     except ValueError as e: st.error(str(e)); st.stop()
     for w in warnings: st.warning(w)

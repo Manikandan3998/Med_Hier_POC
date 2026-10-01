@@ -1,7 +1,6 @@
 node_id,node_type_id,node_name
-0,0,root
+0,0,Root
 10001,11,EMEA
-10002,11,Greater China
 10003,11,LatAm
 10004,11,Asia
 10005,11,Americas
@@ -367,5 +366,9 @@ node_id,node_type_id,node_name
 10365,16,Panama
 10366,17,DEMO Tower Canada 001
 10367,12,RLM-South east asia
-10368,12,India
-10369,16,Tamil nadu
+10368,12,India Barath
+10369,16,kerala
+20001,17,DEMO Tower Canada 002
+20002,17,DEMO Tower Canada 003
+20003,17,DEMO Tower Canada 004
+20004,17,DEMO Tower Canada 005

@@ -1,6 +1,6 @@
 """CSV repository and hierarchy rules. Single-user local POC."""
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import csv, os, shutil, tempfile
 
 SCHEMAS = {
@@ -80,10 +80,10 @@ def validate(db):
     for r in db['node_relationships']:
         tag=f"Relationship {r['relationship_id']}"
         try:
-            date.fromisoformat(r['start'])
-            if r['end']: date.fromisoformat(r['end'])
+            datetime.fromisoformat(r['start'])
+            if r['end']: datetime.fromisoformat(r['end'])
             if r['end'] and r['end']<=r['start']: raise ValueError()
-        except ValueError: errors.append(tag+': invalid date interval'); continue
+        except ValueError: errors.append(tag+': invalid timestamp interval'); continue
         rule=rules.get((r['hier_id'],r['level']))
         p=nodes.get(r['parent']); c=nodes.get(r['child'])
         if not rule or not p or not c: errors.append(tag+': missing reference'); continue
@@ -92,7 +92,7 @@ def validate(db):
         valid.append(r)
     for i,a in enumerate(valid):
         for b in valid[i+1:]:
-            if a['hier_id']==b['hier_id'] and a['child']==b['child'] and a['start']<(b['end'] or '9999-12-31') and b['start']<(a['end'] or '9999-12-31'):
+            if a['hier_id']==b['hier_id'] and a['child']==b['child'] and a['start']<(b['end'] or '9999-12-31T23:59:59') and b['start']<(a['end'] or '9999-12-31T23:59:59'):
                 errors.append(f"Child {a['child']}: overlapping parent assignments")
     return list(dict.fromkeys(errors))
 
