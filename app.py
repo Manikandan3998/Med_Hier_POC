@@ -120,6 +120,69 @@ if page=='Overview':
     st.download_button('Download table',(DATA/f'{table}.csv').read_bytes(),f'{table}.csv','text/csv',icon=':material/download:')
 
 elif page=='Nodes':
+    st.subheader('Node types')
+    if 'nt_mode' not in st.session_state: st.session_state['nt_mode']=None
+    nt_df=pd.DataFrame(db['node_types'],columns=['node_type_id','node_type_name'])
+    nt_btn=st.columns([1,1,1,5],gap='small')
+    nt_btn[3].markdown('<span id="node-btn-row"></span>',unsafe_allow_html=True)
+    if nt_btn[0].button('Add',icon=':material/add_circle:',key='nt_add'): st.session_state['nt_mode']='add'; st.rerun()
+    if nt_btn[1].button('Edit',icon=':material/edit:',key='nt_edit'): st.session_state['nt_mode']='edit'; st.rerun()
+    if nt_btn[2].button('Delete',icon=':material/delete:',key='nt_del'): st.session_state['nt_mode']='delete'; st.rerun()
+    nt_mode=st.session_state['nt_mode']
+    if nt_mode is None or nt_mode=='add':
+        st.dataframe(nt_df,use_container_width=True,hide_index=True)
+        if nt_mode=='add':
+            with st.form('add_node_type'):
+                nt_name=st.text_input('New node type name')
+                c1,c2,_=st.columns([2,2,4])
+                done=c1.form_submit_button('Done',icon=':material/check:')
+                cancel=c2.form_submit_button('Cancel',icon=':material/close:')
+            if cancel: st.session_state['nt_mode']=None; st.rerun()
+            if done:
+                if not nt_name.strip(): st.error('Name is required.')
+                elif any(t['node_type_name'].casefold()==nt_name.strip().casefold() for t in db['node_types']): st.error('This node type name already exists.')
+                else:
+                    d=copy.deepcopy(db); d['node_types'].append({'node_type_id':next_id(d['node_types'],'node_type_id'),'node_type_name':nt_name.strip()}); st.session_state['nt_mode']=None; commit(d,'node_types')
+    elif nt_mode=='edit':
+        edit_nt=nt_df[['node_type_id','node_type_name']].copy()
+        edited=st.data_editor(edit_nt,column_config={'node_type_id':st.column_config.TextColumn('Type ID',disabled=True),'node_type_name':st.column_config.TextColumn('Type Name')},disabled=['node_type_id'],num_rows='fixed',use_container_width=True,hide_index=True,key='nt_edit_editor')
+        c1,c2,_=st.columns([2,2,4])
+        if c1.button('Finish',icon=':material/check:',key='nt_finish'):
+            d=copy.deepcopy(db); errors=[]; seen=set()
+            for _,row in edited.iterrows():
+                name=str(row['node_type_name']).strip() if pd.notna(row['node_type_name']) else ''; tid=str(row['node_type_id'])
+                if not name: errors.append('Type name cannot be empty.'); continue
+                if name.casefold() in seen: errors.append(f'Duplicate name: {name}'); continue
+                seen.add(name.casefold())
+                next(t for t in d['node_types'] if t['node_type_id']==tid)['node_type_name']=name
+            if errors:
+                for e in errors: st.error(e)
+            else: st.session_state['nt_mode']=None; commit(d,'node_types')
+        if c2.button('Cancel',icon=':material/close:',key='nt_cancel'): st.session_state['nt_mode']=None; st.rerun()
+    elif nt_mode=='delete':
+        non_root_df=nt_df[nt_df['node_type_id']!='0']
+        event=st.dataframe(non_root_df,use_container_width=True,hide_index=True,on_select='rerun',selection_mode='multi-row',key='nt_delete_df')
+        selected_indices=event.selection.rows if event.selection else []
+        c1,c2,_=st.columns([2,2,4])
+        if c1.button('Confirm',icon=':material/delete:',key='nt_del_confirm'):
+            if not selected_indices: st.error('Select at least one row to delete.')
+            else:
+                non_root_list=[t for t in db['node_types'] if t['node_type_id']!='0']
+                ids_to_delete={non_root_list[i]['node_type_id'] for i in selected_indices}
+                nodes_using={n['node_type_id'] for n in db['nodes']}&ids_to_delete
+                rules_using={r['parent_node_type'] for r in db['level_rules']}|{r['child_node_type'] for r in db['level_rules']}
+                rules_blocked=ids_to_delete&rules_using
+                if nodes_using:
+                    names=', '.join(next(t['node_type_name'] for t in db['node_types'] if t['node_type_id']==tid) for tid in nodes_using)
+                    st.error(f'Cannot delete types with existing nodes: {names}. Delete the nodes first.')
+                elif rules_blocked:
+                    names=', '.join(next(t['node_type_name'] for t in db['node_types'] if t['node_type_id']==tid) for tid in rules_blocked)
+                    st.error(f'Cannot delete types used in level rules: {names}. Remove the rules first.')
+                else:
+                    d=copy.deepcopy(db); d['node_types']=[t for t in d['node_types'] if t['node_type_id'] not in ids_to_delete]; st.session_state['nt_mode']=None; commit(d,'node_types')
+        if c2.button('Cancel',icon=':material/close:',key='nt_del_cancel'): st.session_state['nt_mode']=None; st.rerun()
+    st.divider()
+    st.subheader('Nodes')
     typ=st.selectbox('Node type',[t['node_type_id'] for t in db['node_types']],format_func=lambda x:next(t['node_type_name'] for t in db['node_types'] if t['node_type_id']==x))
     is_root=typ=='0'
     filtered=[n for n in db['nodes'] if n['node_type_id']==typ]
