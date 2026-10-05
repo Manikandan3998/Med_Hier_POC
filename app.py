@@ -98,7 +98,9 @@ page=st.sidebar.radio('Workspace',list(PAGES),format_func=lambda p:f'{PAGES[p]} 
 
 
 def commit(candidate,table):
-    try: save(candidate,table)
+    try:
+        tables=table if isinstance(table,list) else [table]
+        for t in tables: save(candidate,t)
     except (ValueError,OSError) as e: st.error(str(e)); return
     st.session_state['notice']='Saved successfully.'; st.rerun()
 
@@ -192,12 +194,30 @@ elif page=='Hierarchies & rules':
             if name.strip():
                 d=copy.deepcopy(db); d['hierarchies'].append({'hier_id':next_id(d['hierarchies'],'hier_id'),'hier_desc':name.strip(),'active':'Y'}); commit(d,'hierarchies')
             else: st.error('Name is required.')
+    if not db['hierarchies']:
+        st.info('No hierarchies exist. Create one above.'); st.stop()
     hid=hselect('rules_h')
     selected=next(h for h in db['hierarchies'] if h['hier_id']==hid)
     with st.form('edit_h'):
         name=st.text_input('Hierarchy description',selected['hier_desc']); enabled=st.checkbox('Active',selected['active']=='Y')
         if st.form_submit_button('Save hierarchy',icon=':material/save:'):
             d=copy.deepcopy(db); h=next(h for h in d['hierarchies'] if h['hier_id']==hid); h.update(hier_desc=name.strip(),active='Y' if enabled else 'N'); commit(d,'hierarchies')
+    if st.button('Delete hierarchy',icon=':material/delete:',type='tertiary'):
+        st.session_state['confirm_delete_hier']=hid
+    if st.session_state.get('confirm_delete_hier')==hid:
+        rel_count=sum(1 for r in db['node_relationships'] if r['hier_id']==hid)
+        rule_count=sum(1 for r in db['level_rules'] if r['hier_id']==hid)
+        st.warning(f'This will permanently delete hierarchy "{selected["hier_desc"]}" along with {rule_count} level rule(s) and {rel_count} relationship row(s). This cannot be undone.')
+        dc1,dc2,_=st.columns([2,2,4])
+        if dc1.button('Confirm delete',icon=':material/delete_forever:',type='primary'):
+            d=copy.deepcopy(db)
+            d['hierarchies']=[h for h in d['hierarchies'] if h['hier_id']!=hid]
+            d['level_rules']=[r for r in d['level_rules'] if r['hier_id']!=hid]
+            d['node_relationships']=[r for r in d['node_relationships'] if r['hier_id']!=hid]
+            st.session_state.pop('confirm_delete_hier',None)
+            commit(d,['hierarchies','level_rules','node_relationships'])
+        if dc2.button('Cancel',icon=':material/close:'):
+            st.session_state.pop('confirm_delete_hier',None); st.rerun()
     type_map={t['node_type_id']:f"{t['node_type_id']} - {t['node_type_name']}" for t in db['node_types']}
     rules_display=pd.DataFrame([r for r in db['level_rules'] if r['hier_id']==hid])
     if not rules_display.empty:
